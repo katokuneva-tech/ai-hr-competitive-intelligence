@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI HR Startups — Competitive Intelligence</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #1e293b;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --accent: #6366f1;
+  --accent2: #818cf8;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --orange: #f97316;
+  --cyan: #06b6d4;
+  --pink: #ec4899;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; line-height:1.6; }
+a { color:var(--accent2); text-decoration:none; }
+
+/* Header */
+.header { background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e1b4b 100%); padding:48px 32px 40px; text-align:center; border-bottom:1px solid var(--border); }
+.header h1 { font-size:2.2rem; font-weight:800; letter-spacing:-0.02em; background:linear-gradient(135deg,#c7d2fe,#a5b4fc,#818cf8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.header p { color:var(--text2); margin-top:8px; font-size:0.95rem; }
+.header .meta { display:flex; gap:24px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+.header .meta span { background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); padding:4px 14px; border-radius:20px; font-size:0.8rem; color:var(--accent2); }
+
+/* Nav */
+.nav { display:flex; gap:4px; padding:12px 32px; background:var(--surface); border-bottom:1px solid var(--border); overflow-x:auto; position:sticky; top:0; z-index:100; }
+.nav button { background:none; border:1px solid transparent; color:var(--text2); padding:8px 18px; border-radius:8px; cursor:pointer; font-size:0.85rem; white-space:nowrap; transition:all .2s; }
+.nav button:hover { background:var(--surface2); color:var(--text); }
+.nav button.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+/* Sections */
+.section { display:none; padding:32px; max-width:1400px; margin:0 auto; }
+.section.active { display:block; }
+.section h2 { font-size:1.5rem; font-weight:700; margin-bottom:24px; color:var(--text); }
+.section h3 { font-size:1.1rem; font-weight:600; margin:24px 0 12px; color:var(--accent2); }
+
+/* Cards grid */
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; margin-bottom:32px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; transition:transform .2s, border-color .2s; }
+.card:hover { transform:translateY(-2px); border-color:var(--accent); }
+.card .num { font-size:2rem; font-weight:800; color:var(--accent2); }
+.card .label { font-size:0.8rem; color:var(--text2); text-transform:uppercase; letter-spacing:0.05em; margin-top:4px; }
+.card .detail { font-size:0.85rem; color:var(--text2); margin-top:8px; }
+
+/* KPI strip */
+.kpi-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:32px; }
+.kpi { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 20px; text-align:center; }
+.kpi .value { font-size:1.8rem; font-weight:800; }
+.kpi .label { font-size:0.75rem; color:var(--text2); text-transform:uppercase; letter-spacing:0.05em; margin-top:2px; }
+
+/* Table */
+.table-wrap { overflow-x:auto; border-radius:12px; border:1px solid var(--border); margin-bottom:32px; }
+table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+thead { background:var(--surface2); }
+th { padding:12px 14px; text-align:left; font-weight:600; color:var(--text2); text-transform:uppercase; font-size:0.72rem; letter-spacing:0.05em; border-bottom:2px solid var(--border); white-space:nowrap; }
+td { padding:10px 14px; border-bottom:1px solid var(--border); vertical-align:top; }
+tr:hover td { background:rgba(99,102,241,0.05); }
+.tier-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:600; }
+.tier-1 { background:rgba(99,102,241,0.2); color:var(--accent2); }
+.tier-2 { background:rgba(148,163,184,0.15); color:var(--text2); }
+
+/* Tags */
+.tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.72rem; font-weight:500; margin:1px; }
+.tag-automate { background:rgba(239,68,68,0.15); color:#fca5a5; }
+.tag-augment { background:rgba(234,179,8,0.15); color:#fde047; }
+.tag-assist { background:rgba(34,197,94,0.15); color:#86efac; }
+.tag-vert { background:rgba(6,182,212,0.15); color:#67e8f9; }
+.tag-horiz { background:rgba(168,85,247,0.15); color:#c4b5fd; }
+.tag-platform { background:rgba(249,115,22,0.15); color:#fdba74; }
+.tag-employee { background:rgba(236,72,153,0.15); color:#f9a8d4; }
+.tag-plg { background:rgba(34,197,94,0.15); color:#86efac; }
+.tag-slg { background:rgba(234,179,8,0.15); color:#fde047; }
+.tag-acquired { background:rgba(239,68,68,0.2); color:#fca5a5; border:1px dashed rgba(239,68,68,0.4); }
+
+/* Verdict badges */
+.verdict { display:inline-block; padding:3px 10px; border-radius:6px; font-size:0.75rem; font-weight:700; }
+.verdict-green { background:rgba(34,197,94,0.2); color:var(--green); }
+.verdict-yellow { background:rgba(234,179,8,0.2); color:var(--yellow); }
+.verdict-red { background:rgba(239,68,68,0.2); color:var(--red); }
+
+/* Claim block */
+.claim-block { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin-bottom:12px; }
+.claim-block .claim-text { font-style:italic; color:var(--text); margin-bottom:8px; font-size:0.9rem; }
+.claim-block .evidence { color:var(--text2); font-size:0.82rem; margin-bottom:8px; }
+.claim-block .verdict-line { display:flex; align-items:center; gap:8px; font-size:0.85rem; }
+
+/* Chart containers */
+.chart-row { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px; }
+.chart-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; }
+.chart-box h4 { font-size:0.9rem; color:var(--text2); margin-bottom:16px; text-align:center; }
+.chart-box canvas { max-height:350px; }
+@media(max-width:900px) { .chart-row { grid-template-columns:1fr; } }
+
+/* Company profile */
+.profile { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:20px; }
+.profile-header { display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+.profile-header h3 { margin:0; font-size:1.2rem; color:var(--text); }
+.profile-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px; }
+.profile-field { }
+.profile-field .fl { font-size:0.72rem; color:var(--text2); text-transform:uppercase; letter-spacing:0.05em; }
+.profile-field .fv { font-size:0.88rem; color:var(--text); margin-top:2px; }
+
+/* Findings list */
+.findings { counter-reset:finding; }
+.finding { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin-bottom:10px; display:flex; gap:16px; }
+.finding::before { counter-increment:finding; content:counter(finding); font-size:1.4rem; font-weight:800; color:var(--accent); min-width:28px; }
+.finding p { font-size:0.9rem; }
+.finding strong { color:var(--text); }
+
+/* Gap cards */
+.gap-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+.gap-card { background:var(--surface); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:16px 20px; }
+.gap-card h4 { font-size:0.95rem; color:var(--accent2); margin-bottom:6px; }
+.gap-card p { font-size:0.85rem; color:var(--text2); }
+
+/* Scroll hint */
+.scroll-hint { text-align:center; color:var(--text2); font-size:0.75rem; margin-bottom:8px; }
+
+/* Footer */
+.footer { text-align:center; padding:32px; color:var(--text2); font-size:0.78rem; border-top:1px solid var(--border); margin-top:48px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>AI HR Startups — Competitive Intelligence</h1>
+  <p>Структурированный анализ 10 enterprise-стартапов в AI HR</p>
+  <div class="meta">
+    <span>10 стартапов</span>
+    <span>4 таксономии</span>
+    <span>5 глубоких отчётов Tier 1</span>
+    <span>Дата: 31 марта 2026</span>
+  </div>
+</div>
+
+<div class="nav" id="nav">
+  <button class="active" data-tab="summary">Обзор</button>
+  <button data-tab="taxonomy">Таксономия</button>
+  <button data-tab="profiles">Профили компаний</button>
+  <button data-tab="charts">Графики</button>
+  <button data-tab="overpromise">Аудит обещаний</button>
+  <button data-tab="traction">Трекшн-сигналы</button>
+  <button data-tab="patterns">Рыночные паттерны</button>
+  <button data-tab="strategy">Стратегия</button>
+</div>
+
+<!-- ===== SUMMARY ===== -->
+<div class="section active" id="summary">
+  <h2>Ключевые метрики рынка</h2>
+  <div class="kpi-strip">
+    <div class="kpi"><div class="value" style="color:var(--accent2)">10</div><div class="label">Стартапов проанализировано</div></div>
+    <div class="kpi"><div class="value" style="color:var(--green)">$3.85B</div><div class="label">Сумма M&A сделок 2025</div></div>
+    <div class="kpi"><div class="value" style="color:var(--yellow)">0</div><div class="label">Предлагают on-prem</div></div>
+    <div class="kpi"><div class="value" style="color:var(--cyan)">8 / 10</div><div class="label">Sales-Led Enterprise</div></div>
+    <div class="kpi"><div class="value" style="color:var(--pink)">$16.8B</div><div class="label">Макс. оценка (Rippling)</div></div>
+  </div>
+
+  <h2>10 главных выводов</h2>
+  <div class="findings">
+    <div class="finding"><p><strong>2 из 5 Tier 1 поглощены в 2025:</strong> Paradox → Workday ($1B), Moveworks → ServiceNow ($2.85B). Консолидация платформ — основной путь выхода.</p></div>
+    <div class="finding"><p><strong>Заявления об автономности систематически завышены:</strong> только Paradox (scheduling) и Leena AI (тикеты) обеспечивают измеримую end-to-end автоматизацию.</p></div>
+    <div class="finding"><p><strong>Per-employee ценообразование побеждает:</strong> Leena AI, Eightfold и Moveworks берут оплату за сотрудника, а не за HR-лицензию.</p></div>
+    <div class="finding"><p><strong>Ни один стартап не предлагает on-prem:</strong> все 10 — SaaS-only. Критический GAP для российского enterprise и регулируемых индустрий.</p></div>
+    <div class="finding"><p><strong>Rippling — аномалия:</strong> единственный PLG, $570M+ ARR, 10 255 отзывов на G2, оценка $16.8B.</p></div>
+    <div class="finding"><p><strong>Beamery подаёт сигналы бедствия:</strong> два раунда сокращений в 2023 (12% + 25%), $223M привлечено при ACV $220K-$580K.</p></div>
+    <div class="finding"><p><strong>Сертификаты не спасают от утечек:</strong> Paradox имел SOC 2 + ISO 27001, когда тривиальная уязвимость раскрыла 64M записей кандидатов.</p></div>
+    <div class="finding"><p><strong>Eightfold — лидер по compliance:</strong> FedRAMP Moderate + DISA IL4 + ISO 42001, но G2 рейтинг (8.3/10) самый низкий среди Tier 1.</p></div>
+    <div class="finding"><p><strong>Multi-LLM архитектуры — новый стандарт:</strong> Leena AI открыто использует WorkLM + Gemini + Claude + OpenAI динамически.</p></div>
+    <div class="finding"><p><strong>Самый конкурентный ICP:</strong> enterprise 1000-10000 сотрудников с CHRO как покупателем — 4+ стартапа борются за одного клиента.</p></div>
+  </div>
+</div>
+
+<!-- ===== TAXONOMY ===== -->
+<div class="section" id="taxonomy">
+  <h2>Классификация по 4 таксономиям</h2>
+  <p style="color:var(--text2);margin-bottom:20px;font-size:0.88rem;">Каждый стартап классифицирован строго по одной категории в каждой таксономии. Примечания [borderline] указаны где категория неоднозначна.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Компания</th><th>Tier</th><th>Автономность</th><th>Архетип продукта</th><th>Модель продаж</th><th>Монетизация</th><th>Статус</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Leena AI</strong></td>
+          <td><span class="tier-badge tier-1">Tier 1</span></td>
+          <td><span class="tag tag-automate">AUTOMATE</span></td>
+          <td><span class="tag tag-employee">AI EMPLOYEE</span></td>
+          <td><span class="tag tag-slg">SLG-ENT</span></td>
+          <td>WORKFORCE-BASED</td>
+          <td>Независимый</td>
+        </tr>
+        <tr>
+          <td><strong>Paradox (Olivia)</strong></td>
+          <td><span class="tier-badge tier-1">Tier 1</span></td>
+          <td><span class="tag tag-automate">AUTOMATE</span></td>
+          <td><span class="tag tag-vert">VERTICAL AGENT</span></td>
+          <td><span class="tag tag-slg">SLG-ENT</span></td>
+          <td>PLATFORM + USAGE</td>
+          <td><span class="tag tag-acquired">Workday $1B</span></td>
+        </tr>
+        <tr>
+          <td><strong>Eightfold AI</strong></td>
+          <td><span class="tier-badge tier-1">Tier 1</span></td>
+          <td><span class="tag tag-augment">AUGMENT</span></td>
+          <td><span class="tag tag-platform">WORKFLOW PLATFORM</span></td>
+          <td><span class="tag tag-slg">SLG-ENT</span></td>
+          <td>WORKFORCE-BASED</td>
+          <td>Независимый</td>
+        </tr>
+        <tr>
+          <td><strong>Moveworks</strong></td>
+          <td><span class="tier-badge tier-1">Tier 1</span></td>
+          <td><span class="tag tag-automate">AUTOMATE</span></td>
+          <td><span class="tag tag-employee">AI EMPLOYEE</span></td>
+          <td><span class="tag tag-slg">SLG-ENT</span></td>
+          <td>WORKFORCE-BASED</td>
+          <td><span class="tag tag-acquired">ServiceNow $2.85B</span></td>
+        </tr>
+        <tr>
+          <td><strong>Beamery</strong></td>
+          <td><span class="tier-badge tier-1">Tier 1</span></td>
+          <td><span class="tag tag-augment">AUGMENT</span></td>
+          <td><span class="tag tag-platform">WORKFLOW PLATFORM</span></td>
+          <td><span class="tag tag-slg">SLG-ENT</span></td>
+          <td>SEAT-BASED</td>
+          <td style="color:var(--red)">Сокращения</td>
+        </tr>
+        <tr>
+          <td><strong>Phenom</strong></td>
+          <td><span class="tier-badge tier-2">Tier 2</span></td>
+          <td><span class="tag tag-augment">AUGMENT</span></td>
+          <td><span class="tag tag-platform">WORKFLOW PLATFORM</span></td>
+          <td><span class="tag tag-slg">SLG-ENT</span></td>
+          <td>SEAT-BASED</td>
+          <td>Независимый</td>
+        </tr>
+        <tr>
+          <td><strong>Lattice</strong></td>
+          <td><span class="tier-badge tier-2">Tier 2</span></td>
+          <td><span class="tag tag-assist">ASSIST</span></td>
+          <td><span class="tag tag-horiz">HORIZONTAL COPILOT</span></td>
+          <td><span class="tag tag-slg">SLG-MID</span></td>
+          <td>SEAT-BASED</td>
+          <td>Независимый</td>
+        </tr>
+        <tr>
+          <td><strong>Rippling</strong></td>
+          <td><span class="tier-badge tier-2">Tier 2</span></td>
+          <td><span class="tag tag-augment">AUGMENT</span></td>
+          <td><span class="tag tag-platform">WORKFLOW PLATFORM</span></td>
+          <td><span class="tag tag-plg">PLG</span></td>
+          <td>SEAT-BASED</td>
+          <td style="color:var(--green)">$16.8B</td>
+        </tr>
+        <tr>
+          <td><strong>Workera</strong></td>
+          <td><span class="tier-badge tier-2">Tier 2</span></td>
+          <td><span class="tag tag-assist">ASSIST</span></td>
+          <td><span class="tag tag-vert">VERTICAL AGENT</span></td>
+          <td><span class="tag tag-slg">SLG-ENT</span></td>
+          <td>CONSUMPTION</td>
+          <td>Независимый</td>
+        </tr>
+        <tr>
+          <td><strong>HiredScore</strong></td>
+          <td><span class="tier-badge tier-2">Tier 2</span></td>
+          <td><span class="tag tag-augment">AUGMENT</span></td>
+          <td><span class="tag tag-vert">VERTICAL AGENT</span></td>
+          <td><span class="tag tag-slg">SLG-ENT</span></td>
+          <td>PLATFORM + USAGE</td>
+          <td><span class="tag tag-acquired">Workday 2024</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Распределение по таксономиям</h3>
+  <div class="chart-row">
+    <div class="chart-box"><h4>Модель автономности</h4><canvas id="chartAutonomy"></canvas></div>
+    <div class="chart-box"><h4>Архетип продукта</h4><canvas id="chartArchetype"></canvas></div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box"><h4>Модель продаж</h4><canvas id="chartSales"></canvas></div>
+    <div class="chart-box"><h4>Монетизация</h4><canvas id="chartMonetization"></canvas></div>
+  </div>
+</div>
+
+<!-- ===== PROFILES ===== -->
+<div class="section" id="profiles">
+  <h2>Профили компаний (Tier 1)</h2>
+
+  <div class="profile">
+    <div class="profile-header">
+      <h3>Leena AI</h3>
+      <span class="tag tag-automate">AUTOMATE</span>
+      <span class="tag tag-employee">AI EMPLOYEE</span>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-field"><div class="fl">Позиционирование</div><div class="fv">Agentic AI Platform for Enterprise Automation. Ценностное предложение: сокращение расходов — «70%+ меньше ручных обращений, гарантировано»</div></div>
+      <div class="profile-field"><div class="fl">ICP</div><div class="fv">Enterprise 1000-50K+ сотр. | CHRO / VP HR | FMCG, фарма, авиа, производство | Глобально (HQ Индия)</div></div>
+      <div class="profile-field"><div class="fl">Клиенты</div><div class="fv">Nestle, Coca-Cola, Puma, Abbott, Sony, Etihad, AirAsia, P&G — 500+ клиентов, 3M сотрудников</div></div>
+      <div class="profile-field"><div class="fl">Технология</div><div class="fv">Multi-LLM: WorkLM (Mixtral 8x22B) + Gemini + Claude + OpenAI. Agentic pipeline с оркестратором</div></div>
+      <div class="profile-field"><div class="fl">Безопасность</div><div class="fv">SOC 2 Type II, ISO 27001, HIPAA, GDPR</div></div>
+      <div class="profile-field"><div class="fl">Ценообразование</div><div class="fv">WORKFORCE-BASED — кастомные цены за кол-во сотрудников. $30M Series B (Bessemer, 2021)</div></div>
+      <div class="profile-field"><div class="fl">G2</div><div class="fv">9.2/10 (146 отзывов)</div></div>
+      <div class="profile-field"><div class="fl">Развёртывание</div><div class="fv">SaaS only. On-prem нет</div></div>
+    </div>
+  </div>
+
+  <div class="profile">
+    <div class="profile-header">
+      <h3>Paradox (Olivia)</h3>
+      <span class="tag tag-automate">AUTOMATE</span>
+      <span class="tag tag-vert">VERTICAL AGENT</span>
+      <span class="tag tag-acquired">Workday $1B (Окт 2025)</span>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-field"><div class="fl">Позиционирование</div><div class="fv">Conversational AI для high-volume найма. «Автоматизирует 90%+ hiring». Нарратив: scale without hiring</div></div>
+      <div class="profile-field"><div class="fl">ICP</div><div class="fv">Enterprise 1K-100K+ | VP Talent Acq | QSR, ритейл, hospitality, healthcare | 60+ стран</div></div>
+      <div class="profile-field"><div class="fl">Клиенты</div><div class="fv">McDonald's (McHire), Unilever, Chipotle, 7-Eleven, Marriott, Wendy's, GM, CVS, FedEx, Disney — 1000+ клиентов</div></div>
+      <div class="profile-field"><div class="fl">Технология</div><div class="fv">NLP/NLU intent engine. 100+ языков. Conversational ATS. Traitify assessments</div></div>
+      <div class="profile-field"><div class="fl">Безопасность</div><div class="fv">SOC 2 Type II, ISO 27001, GDPR. НО: утечка 64M записей (Июнь 2025) через пароль «123456»</div></div>
+      <div class="profile-field"><div class="fl">Финансы</div><div class="fv">$115.8M выручка (2023). $253-304M фондирование. Куплен Workday за $1B (ниже оценки $1.5B)</div></div>
+      <div class="profile-field"><div class="fl">G2</div><div class="fv">9.4/10 (38 отзывов)</div></div>
+      <div class="profile-field"><div class="fl">Развёртывание</div><div class="fv">SaaS only. Теперь часть экосистемы Workday</div></div>
+    </div>
+  </div>
+
+  <div class="profile">
+    <div class="profile-header">
+      <h3>Eightfold AI</h3>
+      <span class="tag tag-augment">AUGMENT</span>
+      <span class="tag tag-platform">WORKFLOW PLATFORM</span>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-field"><div class="fl">Позиционирование</div><div class="fv">Talent Intelligence Platform. Deep learning на 1.6B+ карьерных профилей. Skills-based подход</div></div>
+      <div class="profile-field"><div class="fl">ICP</div><div class="fv">Enterprise 1K-100K+ | CHRO / VP Talent | Кросс-индустрия + гос. сектор (FedRAMP) | Глобально</div></div>
+      <div class="profile-field"><div class="fl">Клиенты</div><div class="fv">Conagra, Micron, UiPath, Nutanix, Tata, Hulu, EY, Coca-Cola Europacific, US DoD — ~100 клиентов</div></div>
+      <div class="profile-field"><div class="fl">Технология</div><div class="fv">Проприетарные deep-learning нейросети. Talent graph. 1.6M+ навыков в таксономии</div></div>
+      <div class="profile-field"><div class="fl">Безопасность</div><div class="fv">SOC 2 Type II, ISO 27001/27017/27018, ISO 42001, FedRAMP Moderate, DISA IL4, GDPR — лучший в классе</div></div>
+      <div class="profile-field"><div class="fl">Финансы</div><div class="fv">$96.6M выручка (2024). $396.8M фондирование. Оценка $2.1B. 281 сотрудник (-4% YoY)</div></div>
+      <div class="profile-field"><div class="fl">G2</div><div class="fv">8.3/10 (190 отзывов) — самый низкий среди Tier 1</div></div>
+      <div class="profile-field"><div class="fl">Развёртывание</div><div class="fv">SaaS + FedRAMP cloud для гос. сектора</div></div>
+    </div>
+  </div>
+
+  <div class="profile">
+    <div class="profile-header">
+      <h3>Moveworks</h3>
+      <span class="tag tag-automate">AUTOMATE</span>
+      <span class="tag tag-employee">AI EMPLOYEE</span>
+      <span class="tag tag-acquired">ServiceNow $2.85B (Дек 2025)</span>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-field"><div class="fl">Позиционирование</div><div class="fv">AI Assistant Platform That Gets Work Done. Мгновенное решение IT/HR обращений. AI Employee</div></div>
+      <div class="profile-field"><div class="fl">ICP</div><div class="fv">Enterprise 5K-100K+ | CTO / CIO / VP IT | Tech, финансы, медиа | 10% Fortune 500</div></div>
+      <div class="profile-field"><div class="fl">Клиенты</div><div class="fv">Toyota, Spotify, GitHub, Marriott, Snowflake, Unity, Databricks, Broadcom, Hearst, Siemens, Unilever — 350+ enterprise, 5.5M пользователей</div></div>
+      <div class="profile-field"><div class="fl">Технология</div><div class="fv">Проприетарный Reasoning Engine. Enterprise Search. Agentic automation</div></div>
+      <div class="profile-field"><div class="fl">Безопасность</div><div class="fv">[unverified тип] — enterprise-grade позиционирование</div></div>
+      <div class="profile-field"><div class="fl">Финансы</div><div class="fv">$100-200 за сотрудника/год. Куплен ServiceNow за $2.85B. 90% клиентов — 100% deployment</div></div>
+      <div class="profile-field"><div class="fl">G2</div><div class="fv">9.2/10 (46 отзывов)</div></div>
+      <div class="profile-field"><div class="fl">Развёртывание</div><div class="fv">SaaS (теперь платформа ServiceNow)</div></div>
+    </div>
+  </div>
+
+  <div class="profile">
+    <div class="profile-header">
+      <h3>Beamery</h3>
+      <span class="tag tag-augment">AUGMENT</span>
+      <span class="tag tag-platform">WORKFLOW PLATFORM</span>
+      <span style="color:var(--red);font-size:0.8rem;font-weight:600;">Сокращения 2023</span>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-field"><div class="fl">Позиционирование</div><div class="fv">AI-Powered Workforce Transformation Platform. TalentGPT. Talent graph 17B+ data points</div></div>
+      <div class="profile-field"><div class="fl">ICP</div><div class="fv">Enterprise 5K-100K+ | CHRO / VP TA | Tech, финансы, производство, фарма | UK HQ, GDPR-native</div></div>
+      <div class="profile-field"><div class="fl">Клиенты</div><div class="fv">Flex, Salesforce, Hilti, Wells Fargo [глубина deployment не верифицирована]</div></div>
+      <div class="profile-field"><div class="fl">Технология</div><div class="fv">Проприетарный AI + OpenAI GPT-4 (TalentGPT). Bias-audited модели. Talent Graph</div></div>
+      <div class="profile-field"><div class="fl">Безопасность</div><div class="fv">[unverified SOC2 тип] — GDPR-native (UK). Единственные дают кандидатам контроль над AI-данными</div></div>
+      <div class="profile-field"><div class="fl">Финансы</div><div class="fv">$223M фондирование. ACV $220K-$580K. Сокращения: 12% (Янв 2023) + 25% (Ноя 2023)</div></div>
+      <div class="profile-field"><div class="fl">G2</div><div class="fv">8.2/10 (151 отзыв) — самый низкий рейтинг в выборке</div></div>
+      <div class="profile-field"><div class="fl">Развёртывание</div><div class="fv">SaaS only</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHARTS ===== -->
+<div class="section" id="charts">
+  <h2>Визуализация данных</h2>
+
+  <div class="chart-row">
+    <div class="chart-box"><h4>G2 Рейтинг (из 10)</h4><canvas id="chartG2rating"></canvas></div>
+    <div class="chart-box"><h4>Количество отзывов на G2 (log шкала)</h4><canvas id="chartG2reviews"></canvas></div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box"><h4>Объём M&A сделок 2024-2025 ($M)</h4><canvas id="chartMA"></canvas></div>
+    <div class="chart-box"><h4>Общее фондирование ($M)</h4><canvas id="chartFunding"></canvas></div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box" style="grid-column:1/-1"><h4>Соотношение G2 рейтинга к количеству отзывов (размер = масштаб компании)</h4><canvas id="chartBubble"></canvas></div>
+  </div>
+</div>
+
+<!-- ===== OVERPROMISE ===== -->
+<div class="section" id="overpromise">
+  <h2>Аудит обещаний (Overpromise Audit)</h2>
+  <p style="color:var(--text2);margin-bottom:24px;font-size:0.88rem;">Для каждого Tier 1 стартапа: 3 сильнейших маркетинговых утверждения, контр-доказательства, вердикт.</p>
+
+  <h3>Leena AI</h3>
+  <div class="claim-block">
+    <div class="claim-text">«70%+ меньше ручных обращений, гарантировано»</div>
+    <div class="evidence">G2: проблемы с delivery rate (10-15%); длительная кастомизация; сложные запросы проваливаются</div>
+    <div class="verdict-line"><span class="verdict verdict-yellow">YELLOW</span> 70% достижимо для FAQ, но «гарантия» — маркетинговая гиперболизация</div>
+  </div>
+  <div class="claim-block">
+    <div class="claim-text">«Автономные агенты выполняют действия в enterprise-системах»</div>
+    <div class="evidence">Отзывы: высокая зависимость от команды внедрения Leena AI; первичные пользователи путаются</div>
+    <div class="verdict-line"><span class="verdict verdict-yellow">YELLOW</span> Простые действия работают; сложные workflow требуют значительной настройки</div>
+  </div>
+  <div class="claim-block">
+    <div class="claim-text">«1000+ enterprise интеграций»</div>
+    <div class="evidence">Нет независимой верификации; G2 не выделяет интеграции как сильную сторону</div>
+    <div class="verdict-line"><span class="verdict verdict-yellow">YELLOW</span> Вероятно включает простые webhook-подключения; bi-directional нативных гораздо меньше</div>
+  </div>
+
+  <h3>Paradox (Olivia)</h3>
+  <div class="claim-block">
+    <div class="claim-text">«Автоматизирует 90%+ end-to-end найма»</div>
+    <div class="evidence">Автоматизирует scheduling, screening, FAQ; Olivia зацикливается на сложных вопросах</div>
+    <div class="verdict-line"><span class="verdict verdict-red">RED</span> 90% для полного цикла найма — завышение. Верно только для узких повторяющихся задач</div>
+  </div>
+  <div class="claim-block">
+    <div class="claim-text">«99%+ удовлетворённость кандидатов»</div>
+    <div class="evidence">Выборочная метрика из McDonald's; Glassdoor/TikTok: кандидаты считают текст от Olivia спамом</div>
+    <div class="verdict-line"><span class="verdict verdict-red">RED</span> Метрика одного клиента в специфичном контексте; широкий sentiment — смешанный</div>
+  </div>
+  <div class="claim-block">
+    <div class="claim-text">«Enterprise-grade security» (SOC 2 + ISO 27001)</div>
+    <div class="evidence">64M записей утекли через пароль «123456» + IDOR уязвимость (Июнь 2025)</div>
+    <div class="verdict-line"><span class="verdict verdict-red">RED</span> Бумажный compliance не = реальная безопасность. Уязвимость была тривиальной</div>
+  </div>
+
+  <h3>Eightfold AI</h3>
+  <div class="claim-block">
+    <div class="claim-text">«AI-матчинг по 1.6B+ карьерных профилей»</div>
+    <div class="evidence">G2: неточные данные кандидатов; проблемы парсинга резюме; inconsistent profiles</div>
+    <div class="verdict-line"><span class="verdict verdict-yellow">YELLOW</span> Talent graph существует, но качество данных ≠ точный матчинг для всех клиентов</div>
+  </div>
+  <div class="claim-block">
+    <div class="claim-text">«Работает рядом с существующими HRIS/ATS»</div>
+    <div class="evidence">G2: интеграция занимает недели-месяцы; конкретные проблемы с ATS-коннекторами</div>
+    <div class="verdict-line"><span class="verdict verdict-yellow">YELLOW</span> Интеграции работают, но значительно сложнее чем «alongside» подразумевает</div>
+  </div>
+  <div class="claim-block">
+    <div class="claim-text">«Больше security-сертификатов чем у любого другого HR-вендора»</div>
+    <div class="evidence">FedRAMP Moderate + DISA IL4 + ISO 42001 действительно уникальны для HR tech</div>
+    <div class="verdict-line"><span class="verdict verdict-green">GREEN</span> Верифицируемо. Широта сертификации (FedRAMP + DISA IL4) действительно исключительна</div>
+  </div>
+
+  <h3>Moveworks</h3>
+  <div class="claim-block">
+    <div class="claim-text">«AI Assistant Platform That Gets Work Done»</div>
+    <div class="evidence">G2: медленные ответы, ограниченная кастомизация, крутая кривая обучения</div>
+    <div class="verdict-line"><span class="verdict verdict-yellow">YELLOW</span> Работает для стандартных IT/HR тикетов; завышение для сложных сценариев</div>
+  </div>
+  <div class="claim-block">
+    <div class="claim-text">«90% клиентов деплоят на 100% сотрудников»</div>
+    <div class="evidence">Нет контр-доказательств; enterprise-wide deployment — сильный сигнал</div>
+    <div class="verdict-line"><span class="verdict verdict-green">GREEN</span> Подлинная метрика трекшна; почти полный deployment — редкость, указывает на реальную ценность</div>
+  </div>
+  <div class="claim-block">
+    <div class="claim-text">«Мгновенное и автоматическое решение проблем»</div>
+    <div class="evidence">Performance issues; сложные кейсы → эскалация; legacy-системы ломают instant resolution</div>
+    <div class="verdict-line"><span class="verdict verdict-yellow">YELLOW</span> «Мгновенно» верно для ~50% стандартных тикетов; сложные запросы — нет</div>
+  </div>
+
+  <h3>Beamery</h3>
+  <div class="claim-block">
+    <div class="claim-text">«467% ROI» (исследование Forrester)</div>
+    <div class="evidence">Заказное исследование; ACV $220K-$580K; 25% сокращения = финансовые проблемы</div>
+    <div class="verdict-line"><span class="verdict verdict-red">RED</span> Заказные ROI-исследования — маркетинговый инструмент. 467% неверифицируема и противоречит distress signals</div>
+  </div>
+  <div class="claim-block">
+    <div class="claim-text">«TalentGPT: первый в мире Generative AI для HR»</div>
+    <div class="evidence">Конкуренты запустили GenAI примерно одновременно (Eightfold, Phenom); «первый» — timing-marketing</div>
+    <div class="verdict-line"><span class="verdict verdict-yellow">YELLOW</span> Был ранним, но «первый» — спорно; ограниченные доказательства трансформативного эффекта</div>
+  </div>
+  <div class="claim-block">
+    <div class="claim-text">«17 миллиардов data points»</div>
+    <div class="evidence">G2: устаревшие/неверные контактные данные; высокий bounce rate при коммуникации</div>
+    <div class="verdict-line"><span class="verdict verdict-yellow">YELLOW</span> Объём данных вероятно реален, но проблемы качества подрывают заявление «powering decisions»</div>
+  </div>
+
+  <h3 style="margin-top:32px">Сводка вердиктов</h3>
+  <div class="chart-row">
+    <div class="chart-box" style="grid-column:1/-1"><canvas id="chartVerdicts"></canvas></div>
+  </div>
+</div>
+
+<!-- ===== TRACTION ===== -->
+<div class="section" id="traction">
+  <h2>Трекшн-сигналы</h2>
+  <p style="color:var(--text2);margin-bottom:20px;font-size:0.88rem;">Без vanity metrics. Используются: G2 velocity, состав вакансий, специфичность кейсов, наличие pricing page.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Компания</th><th>G2 Рейтинг</th><th>G2 Отзывы</th><th>Pricing Page</th><th>Distress Flags</th><th>Ключевой сигнал</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Leena AI</strong></td><td>9.2/10</td><td>146</td><td style="color:var(--red)">Нет</td><td>—</td><td>500+ клиентов, 3M сотрудников</td></tr>
+        <tr><td><strong>Paradox</strong></td><td>9.4/10</td><td>38</td><td style="color:var(--red)">Нет</td><td style="color:var(--red)">Acquired at down-round; breach 64M</td><td>1000+ клиентов, но куплен ниже оценки</td></tr>
+        <tr><td><strong>Eightfold AI</strong></td><td>8.3/10</td><td>190</td><td style="color:var(--red)">Нет</td><td style="color:var(--yellow)">Headcount -4% YoY</td><td>$96.6M выручка, только 100 клиентов (высокий ACV)</td></tr>
+        <tr><td><strong>Moveworks</strong></td><td>9.2/10</td><td>46</td><td style="color:var(--red)">Нет</td><td>—</td><td>350+ enterprise, 5.5M users, $2.85B exit</td></tr>
+        <tr><td><strong>Beamery</strong></td><td style="color:var(--red)">8.2/10</td><td>151</td><td style="color:var(--red)">Нет</td><td style="color:var(--red)">2 раунда сокращений (37%)</td><td>Lowest rating + layoffs = highest risk</td></tr>
+        <tr><td><strong>Phenom</strong></td><td>8.6/10</td><td style="color:var(--green)">424</td><td style="color:var(--red)">Нет</td><td>—</td><td>Активные M&A (2 acquisition 2025-2026)</td></tr>
+        <tr><td><strong>Lattice</strong></td><td>9.3/10</td><td style="color:var(--green)">3,907</td><td style="color:var(--green)">Да ($11-19/user/mo)</td><td>—</td><td>Сильнейший PLG-сигнал среди HR-focused</td></tr>
+        <tr><td><strong>Rippling</strong></td><td style="color:var(--green)">9.6/10</td><td style="color:var(--green)">10,255</td><td style="color:var(--green)">Да ($8/user/mo)</td><td>—</td><td>$570M+ ARR, $16.8B — доминантный PLG</td></tr>
+        <tr><td><strong>Workera</strong></td><td>N/A</td><td>N/A</td><td style="color:var(--red)">Нет</td><td style="color:var(--yellow)">Нишевый ($44.5M raised)</td><td>Andrew Ng, U.S. Air Force, Accenture</td></tr>
+        <tr><td><strong>HiredScore</strong></td><td>N/A</td><td>N/A</td><td style="color:var(--red)">Нет</td><td>—</td><td>Поглощён Workday; 4000+ ATS клиентов</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Ключевые инсайты по трекшну</h3>
+  <div class="cards">
+    <div class="card">
+      <div class="num" style="color:var(--green)">2/10</div>
+      <div class="label">Имеют публичные цены</div>
+      <div class="detail">Только Lattice и Rippling — оба лидеры по отзывам. Pricing page = PLG confidence</div>
+    </div>
+    <div class="card">
+      <div class="num" style="color:var(--cyan)">10K+</div>
+      <div class="label">Отзывов у Rippling</div>
+      <div class="detail">Больше чем у всех Tier 1 вместе взятых (571). Self-serve adoption масштабирует reviews</div>
+    </div>
+    <div class="card">
+      <div class="num" style="color:var(--red)">37%</div>
+      <div class="label">Сокращено в Beamery</div>
+      <div class="detail">Два раунда в 2023: 12% + 25%. Цель — снижение затрат на 35%. Самый высокий риск</div>
+    </div>
+    <div class="card">
+      <div class="num" style="color:var(--yellow)">38</div>
+      <div class="label">Отзывов у Paradox</div>
+      <div class="detail">Обслуживает McDonald's глобально, но всего 38 отзывов — enterprise SLG подавляет G2 velocity</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PATTERNS ===== -->
+<div class="section" id="patterns">
+  <h2>Рыночные паттерны</h2>
+
+  <h3>1. Заявления об автономности vs. реальные возможности</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Маркетинг</th><th>Реальность</th><th>Компании</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag tag-employee">AI EMPLOYEE</span> (полная автономия)</td><td><span class="tag tag-automate">AUTOMATE</span> только для структурированных задач</td><td>Leena AI, Moveworks</td></tr>
+        <tr><td><span class="tag tag-automate">AUTOMATE</span> (end-to-end)</td><td><span class="tag tag-automate">AUTOMATE</span> для узкого домена (scheduling/screening)</td><td>Paradox</td></tr>
+        <tr><td><span class="tag tag-platform">WORKFLOW PLATFORM</span> (intelligent)</td><td><span class="tag tag-augment">AUGMENT</span> с AI-рекомендациями</td><td>Eightfold, Beamery, Phenom</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="color:var(--text2);font-size:0.88rem;margin-bottom:32px;">Ни одна компания не обеспечивает истинную автономию для сложных HR-решений (промоции, компенсации, орг. дизайн).</p>
+
+  <h3>2. Какая монетизация побеждает в enterprise</h3>
+  <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+    <div class="card" style="border-color:var(--green)">
+      <div class="label" style="color:var(--green)">Побеждает: WORKFORCE-BASED</div>
+      <div class="detail" style="margin-top:8px">Выравнивает доход вендора с headcount клиента. Естественный рост при расширении. Leena AI, Eightfold, Moveworks.</div>
+    </div>
+    <div class="card" style="border-color:var(--yellow)">
+      <div class="label" style="color:var(--yellow)">Сохраняется: SEAT-BASED</div>
+      <div class="detail" style="margin-top:8px">Для инструментов используемых только HR-командой. Ограничивает TAM. Beamery, Lattice, Phenom.</div>
+    </div>
+    <div class="card" style="border-color:var(--text2)">
+      <div class="label" style="color:var(--text2)">Редкость: OUTCOME-BASED</div>
+      <div class="detail" style="margin-top:8px">Pay-per-resolution / pay-per-hire пока не масштабировался. Только Workera приближается с per-assessment.</div>
+    </div>
+  </div>
+
+  <h3>3. Самый конкурентный сегмент</h3>
+  <div class="chart-row">
+    <div class="chart-box" style="grid-column:1/-1"><h4>Overlap по ICP: Enterprise 1K-10K сотрудников, покупатель CHRO</h4><canvas id="chartICP"></canvas></div>
+  </div>
+
+  <h3>4. PLG vs SLG: эволюция</h3>
+  <div class="cards" style="grid-template-columns:1fr 1fr">
+    <div class="card">
+      <div class="label" style="color:var(--green)">PLG процветает</div>
+      <div class="detail" style="margin-top:8px">Для HR-инструментов используемых HR-командой (Lattice, Rippling). Покупатель = пользователь. Self-serve → trial → adoption.</div>
+    </div>
+    <div class="card">
+      <div class="label" style="color:var(--yellow)">SLG-ENT доминирует</div>
+      <div class="detail" style="margin-top:8px">Для AI-платформ требующих интеграцию, security review, IT-involvement. 8 из 10 — SLG-ENT.</div>
+    </div>
+  </div>
+  <p style="color:var(--red);font-size:0.88rem;margin-top:12px;margin-bottom:32px"><strong>Мёртвая зона: SLG-MID</strong> — сочетает стоимость enterprise-продаж с бюджетными ограничениями mid-market. Самая слабая позиция.</p>
+</div>
+
+<!-- ===== STRATEGY ===== -->
+<div class="section" id="strategy">
+  <h2>Стратегия: On-Prem HR Copilot</h2>
+  <p style="color:var(--text2);margin-bottom:24px;font-size:0.9rem;">Выводы для построения enterprise on-prem HR AI продукта для российского рынка.</p>
+
+  <h3>Критические GAP-ы рынка</h3>
+  <div class="gap-grid">
+    <div class="gap-card">
+      <h4>On-Prem развёртывание</h4>
+      <p>0 из 10 стартапов предлагают on-prem. Российский enterprise (гос., финансы, оборона) требует суверенности данных. Это главный моат.</p>
+    </div>
+    <div class="gap-card">
+      <h4>Интеграция с 1С:ЗУП</h4>
+      <p>Западные стартапы интегрируются с Workday/SuccessFactors. Для RU рынка нужна нативная интеграция с 1С:ЗУП, БОСС-Кадровик, SAP HCM Russia.</p>
+    </div>
+    <div class="gap-card">
+      <h4>Локальные LLM</h4>
+      <p>Leena AI использует GPT + Claude + Gemini. Для RU: YandexGPT/GigaChat + Mistral/Llama open-source на собственной инфраструктуре.</p>
+    </div>
+    <div class="gap-card">
+      <h4>Регуляторика 152-ФЗ</h4>
+      <p>SOC 2 / GDPR не релевантны. Нужен 152-ФЗ compliance, требования ФСТЭК для гос. органов, локализация данных.</p>
+    </div>
+    <div class="gap-card">
+      <h4>Русский NLP для HR</h4>
+      <p>Западные модели underperform на русской HR-терминологии. Нужен fine-tune на российском трудовом кодексе, кадровых документах, ЛНА.</p>
+    </div>
+    <div class="gap-card">
+      <h4>Skills taxonomy для RU</h4>
+      <p>Нет российского аналога talent graph Eightfold (1.6B профилей). Возможность построить на данных hh.ru, SuperJob, HeadHunter.</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:32px">Что заимствовать / чего избегать</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:50%">Заимствовать</th><th style="width:50%">Избегать</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--green)">Multi-LLM agentic архитектура Leena AI с доменной оркестрацией</td><td style="color:var(--red)">Подход Beamery «платформа для всего» без глубины → высокий ACV, низкая удовлетворённость</td></tr>
+        <tr><td style="color:var(--green)">Conversational hiring automation Paradox (доказан на масштабе McDonald's)</td><td style="color:var(--red)">Маркетинг «AI Employee» без реальной автономности → подрывает доверие</td></tr>
+        <tr><td style="color:var(--green)">Skills taxonomy подход Eightfold (deep learning на карьерных профилях)</td><td style="color:var(--red)">Workforce-based pricing без чёткой per-employee ценности → проблемы при закупке</td></tr>
+        <tr><td style="color:var(--green)">Employee-facing search + action интерфейс Moveworks</td><td style="color:var(--red)">SaaS-only без on-prem/hybrid → блокирует регулируемые индустрии</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:32px">Приоритеты для конкурентного моата</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Фактор</th><th>Сложность</th><th>Влияние</th><th>Приоритет</th></tr></thead>
+      <tbody>
+        <tr><td>On-prem развёртывание</td><td style="color:var(--yellow)">Средняя</td><td style="color:var(--green)"><strong>Критичный</strong></td><td style="color:var(--red)"><strong>P0</strong></td></tr>
+        <tr><td>Интеграция с 1С:ЗУП</td><td style="color:var(--yellow)">Средняя</td><td style="color:var(--green)">Высокое</td><td style="color:var(--red)"><strong>P0</strong></td></tr>
+        <tr><td>Compliance 152-ФЗ</td><td style="color:var(--green)">Низкая</td><td style="color:var(--green)">Высокое</td><td style="color:var(--red)"><strong>P0</strong></td></tr>
+        <tr><td>Русский NLP для HR</td><td style="color:var(--yellow)">Средняя</td><td style="color:var(--green)">Высокое</td><td style="color:var(--yellow)"><strong>P1</strong></td></tr>
+        <tr><td>Multi-LLM с локальными моделями</td><td style="color:var(--red)">Высокая</td><td style="color:var(--yellow)">Среднее</td><td style="color:var(--yellow)"><strong>P1</strong></td></tr>
+        <tr><td>Skills taxonomy для RU рынка</td><td style="color:var(--red)">Высокая</td><td style="color:var(--yellow)">Среднее</td><td style="color:var(--text2)"><strong>P2</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer">
+  AI HR Competitive Intelligence Dashboard &middot; Данные собраны 31 марта 2026 &middot; Источники: G2, LinkedIn, Crunchbase, пресс-релизы, аналитические отчёты
+</div>
+
+<script>
+// === NAV ===
+document.querySelectorAll('.nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// === CHART DEFAULTS ===
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = '#1e293b';
+Chart.defaults.font.family = "'Inter',-apple-system,sans-serif";
+
+const COLORS = ['#6366f1','#06b6d4','#22c55e','#eab308','#ef4444','#ec4899','#f97316','#a78bfa','#14b8a6','#fb923c'];
+const NAMES = ['Leena AI','Paradox','Eightfold AI','Moveworks','Beamery','Phenom','Lattice','Rippling','Workera','HiredScore'];
+
+// Taxonomy donuts
+function donut(id, labels, data, colors) {
+  new Chart(document.getElementById(id), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:0 }] },
+    options:{ plugins:{ legend:{ position:'bottom', labels:{ padding:12, usePointStyle:true, font:{size:11} } } }, cutout:'55%' }
+  });
+}
+donut('chartAutonomy',['AUTOMATE','AUGMENT','ASSIST'],[3,5,2],['#ef4444','#eab308','#22c55e']);
+donut('chartArchetype',['WORKFLOW PLATFORM','VERTICAL AGENT','AI EMPLOYEE','HORIZONTAL COPILOT'],[4,3,2,1],['#f97316','#06b6d4','#ec4899','#a78bfa']);
+donut('chartSales',['SLG-ENT','SLG-MID','PLG'],[8,1,1],['#eab308','#f97316','#22c55e']);
+donut('chartMonetization',['SEAT-BASED','WORKFORCE-BASED','PLATFORM+USAGE','CONSUMPTION'],[4,3,2,1],['#6366f1','#22c55e','#f97316','#06b6d4']);
+
+// G2 Rating bar
+const g2names = ['Rippling','Paradox','Lattice','Leena AI','Moveworks','Phenom','Eightfold','Beamery'];
+const g2ratings = [9.6,9.4,9.3,9.2,9.2,8.6,8.3,8.2];
+new Chart(document.getElementById('chartG2rating'), {
+  type:'bar',
+  data:{ labels:g2names, datasets:[{ label:'G2 Rating /10', data:g2ratings, backgroundColor:g2ratings.map(r=>r>=9?'#22c55e':r>=8.5?'#eab308':'#ef4444'), borderRadius:6 }] },
+  options:{ indexAxis:'y', scales:{ x:{ min:7, max:10 } }, plugins:{ legend:{display:false} } }
+});
+
+// G2 Reviews bar (log)
+const revNames = ['Rippling','Lattice','Phenom','Eightfold','Beamery','Leena AI','Moveworks','Paradox'];
+const revCounts = [10255,3907,424,190,151,146,46,38];
+new Chart(document.getElementById('chartG2reviews'), {
+  type:'bar',
+  data:{ labels:revNames, datasets:[{ label:'Отзывы на G2', data:revCounts, backgroundColor:COLORS, borderRadius:6 }] },
+  options:{ indexAxis:'y', scales:{ x:{ type:'logarithmic' } }, plugins:{ legend:{display:false} } }
+});
+
+// M&A chart
+new Chart(document.getElementById('chartMA'), {
+  type:'bar',
+  data:{
+    labels:['Moveworks → ServiceNow','Paradox → Workday','HiredScore → Workday'],
+    datasets:[{ label:'$M', data:[2850,1000,null], backgroundColor:['#6366f1','#06b6d4','#94a3b8'], borderRadius:6 }]
+  },
+  options:{ plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true } } }
+});
+
+// Funding chart
+const fundNames = ['Eightfold','Paradox','Beamery','Rippling*','Workera'];
+const fundAmounts = [396.8,280,223,null,44.5]; // Rippling too large to show
+new Chart(document.getElementById('chartFunding'), {
+  type:'bar',
+  data:{
+    labels:['Eightfold\n$396.8M','Paradox\n~$280M','Beamery\n$223M','Leena AI\n$30M+','Workera\n$44.5M'],
+    datasets:[{ label:'Фондирование $M', data:[396.8,280,223,30,44.5], backgroundColor:['#6366f1','#06b6d4','#ec4899','#22c55e','#f97316'], borderRadius:6 }]
+  },
+  options:{ plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true } } }
+});
+
+// Bubble chart
+new Chart(document.getElementById('chartBubble'), {
+  type:'bubble',
+  data:{
+    datasets:[
+      { label:'Leena AI', data:[{x:9.2,y:146,r:12}], backgroundColor:'rgba(99,102,241,0.6)' },
+      { label:'Paradox', data:[{x:9.4,y:38,r:15}], backgroundColor:'rgba(6,182,212,0.6)' },
+      { label:'Eightfold', data:[{x:8.3,y:190,r:14}], backgroundColor:'rgba(34,197,94,0.6)' },
+      { label:'Moveworks', data:[{x:9.2,y:46,r:16}], backgroundColor:'rgba(234,179,8,0.6)' },
+      { label:'Beamery', data:[{x:8.2,y:151,r:10}], backgroundColor:'rgba(239,68,68,0.6)' },
+      { label:'Phenom', data:[{x:8.6,y:424,r:13}], backgroundColor:'rgba(249,115,22,0.6)' },
+      { label:'Lattice', data:[{x:9.3,y:3907,r:12}], backgroundColor:'rgba(168,85,247,0.6)' },
+      { label:'Rippling', data:[{x:9.6,y:10255,r:20}], backgroundColor:'rgba(236,72,153,0.6)' },
+    ]
+  },
+  options:{
+    scales:{
+      x:{ title:{ display:true, text:'G2 Рейтинг (из 10)' }, min:7.5, max:10 },
+      y:{ title:{ display:true, text:'Количество отзывов' }, type:'logarithmic' }
+    },
+    plugins:{ legend:{ position:'bottom', labels:{ usePointStyle:true, font:{size:11} } } }
+  }
+});
+
+// Verdicts stacked bar
+new Chart(document.getElementById('chartVerdicts'), {
+  type:'bar',
+  data:{
+    labels:['Leena AI','Paradox','Eightfold','Moveworks','Beamery'],
+    datasets:[
+      { label:'GREEN', data:[0,0,1,1,0], backgroundColor:'#22c55e' },
+      { label:'YELLOW', data:[3,0,2,2,2], backgroundColor:'#eab308' },
+      { label:'RED', data:[0,3,0,0,1], backgroundColor:'#ef4444' }
+    ]
+  },
+  options:{ scales:{ x:{stacked:true}, y:{stacked:true, max:3} }, plugins:{ legend:{ position:'bottom', labels:{usePointStyle:true} } } }
+});
+
+// ICP overlap
+new Chart(document.getElementById('chartICP'), {
+  type:'radar',
+  data:{
+    labels:['Enterprise 1K-10K','CHRO / VP Talent','Cross-industry','Recruiting focus','Skills/L&D','HR Service Desk','Government'],
+    datasets:[
+      { label:'Leena AI', data:[5,5,5,2,2,5,1], borderColor:'#6366f1', backgroundColor:'rgba(99,102,241,0.1)', pointRadius:3 },
+      { label:'Eightfold', data:[5,5,5,5,4,1,5], borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,0.1)', pointRadius:3 },
+      { label:'Beamery', data:[5,5,4,5,3,1,1], borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,0.1)', pointRadius:3 },
+      { label:'Phenom', data:[5,5,5,5,3,1,1], borderColor:'#f97316', backgroundColor:'rgba(249,115,22,0.1)', pointRadius:3 },
+    ]
+  },
+  options:{
+    scales:{ r:{ beginAtZero:true, max:5, ticks:{ stepSize:1, display:false }, grid:{ color:'#1e293b' }, pointLabels:{ font:{size:11} } } },
+    plugins:{ legend:{ position:'bottom', labels:{usePointStyle:true, font:{size:11}} } }
+  }
+});
+</script>
+</body>
+</html>
